@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wpapp-cm
+  labels:
+    name: wpapp-cm
+data:
+  WORDPRESS_DB_NAME: wordpressdb
+  WORDPRESS_DB_USER: wpuser
+  WORDPRESS_DB_PASSWORD: wordpress
+  WORDPRESS_DB_HOST: wpdb-svc.wpns.svc.cluster.local
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wpapp-deploy
+  labels:
+    name: wpapp-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: wpapp-pod
+  template:
+    metadata:
+      name: wpapp-pod
+      labels:
+        name: wpapp-pod
+        dept: app
+    spec:
+      containers:
+        - name: wpapp-container
+          image: wordpress
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: wpapp-cm
+          ports:
+            - name: wpapp-port
+              containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wpapp-svc
+  labels:
+    name: wpapp-svc
+spec:
+  type: ClusterIP
+  selector:
+    name: wpapp-pod
+  ports:
+    - port: 80
+      targetPort: wpapp-port

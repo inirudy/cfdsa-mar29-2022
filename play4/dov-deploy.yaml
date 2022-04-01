@@ -1,3 +1,30 @@
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Marketplace
+Explore
+
+@inirudy
+chukmunnlee
+/
+cfdsa-mar29-2022
+Public
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+cfdsa-mar29-2022/demo04/dov-deploy.yaml
+@chukmunnlee
+chukmunnlee day4 AM demos
+Latest commit 1c0192b 1 minute ago
+History
+1 contributor
+67 lines (65 sloc)  1.22 KB
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -16,7 +43,7 @@ metadata:
   labels:
     name: dov-deploy
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       name: dov-pod
@@ -27,6 +54,14 @@ spec:
         name: dov-pod
         dept: engg
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  name: dov-pod
+                  dept: engg
+              topologyKey: doks.digitalocean.com/node-id
       containers:
         - name: dov-container
           image: stackupiss/dov-bear:v2
@@ -42,10 +77,6 @@ spec:
           ports:
             - name: dov-port
               containerPort: 3000
-          resources:
-            requests:
-              cpu: 100m
-              memory: 32M
 
 ---
 apiVersion: v1
@@ -55,31 +86,9 @@ metadata:
   labels:
     name: dov-svc
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     name: dov-pod
   ports:
     - port: 8080
       targetPort: dov-port
-
----
-apiVersion: autoscaling/v2beta2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: dov-hpa
-  labels:
-    name: dov-hpa
-  spec:
-    minReplicas: 1
-    maxReplicas: 4
-    scaleTargetRef:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: dov-deploy
-    metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 70

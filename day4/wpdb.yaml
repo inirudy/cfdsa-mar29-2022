@@ -1,0 +1,64 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wpapp-cm
+  labels:
+    name: wpapp-cm
+data:
+  MYSQL_DATABASE: wordpressdb
+  MYSQL_USER: wpuser
+  MYSQL_PASSWORD: wordpress
+  MYSQL_RANDOM_ROOT_PASSWORD: "1"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wpdb-deploy
+  labels:
+    name: wpdb-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: wpdb-pod
+  template:
+    metadata:
+      name: wpdb-pod
+      labels:
+        name: wpdb-pod
+        dept: db
+    spec:
+      volumes:
+        - name: wpdb-vol
+          persistentVolumeClaim:
+            claimName: data-pvc
+      containers:
+        - name: wpdb-container
+          image: mysql
+          envFrom:
+            - configMapRef:
+                name: wpapp-cm
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: wpdb-port
+              containerPort: 3306
+          volumeMounts:
+            - name: wpdb-vol
+              mountPath: /var/lib/mysql
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wpdb-svc
+  labels:
+    name: wpdb-svc
+spec:
+  type: ClusterIP
+  selector:
+    name: wpdb-pod
+  ports:
+    - port: 3306
+      targetPort: wpdb-port
