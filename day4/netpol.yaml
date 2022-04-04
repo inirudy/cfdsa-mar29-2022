@@ -2,12 +2,66 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: netpol-deny-all
+  name: netpol-deny-db-all
   labels:
-    name: netpol-deny-all
+    name: netpol-deny-db-all
+spec:
+  podSelector:
+    matchLabels:
+      name: wpdb-pod
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netpol-allow-db-in-3306
+  labels:
+    name: netpol-allow-db-in-3306
+spec:
+  podSelector:
+    matchLabels:
+      name: wpdb-pod
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 3306
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netpol-allow-app-in-80
+  labels:
+    name: netpol-allow-app-in-80
 spec:
   podSelector:
     matchLabels:
       name: wpapp-pod
   policyTypes:
     - Ingress
+  ingress:
+    - ports:
+        - port: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netpol-allow-app-out-db
+  labels:
+    name: netpol-allow-app-out-db
+spec:
+  podSelector:
+    matchLabels:
+      name: wpapp-pod
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              name: wpdb-pod
