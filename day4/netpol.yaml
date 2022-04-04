@@ -1,0 +1,13 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netpol-deny-all
+  labels:
+    name: netpol-deny-all
+spec:
+  podSelector:
+    matchLabels:
+      name: wpapp-pod
+  policyTypes:
+    - Ingress
